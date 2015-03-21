@@ -21,20 +21,28 @@ chrome.runtime.onMessage.addListener(
 chrome.omnibox.onInputChanged.addListener(
     function (text, suggest) {
         var textChars = text.split('');
-        var regexBody = ANY_TEXT+_.map(textChars, function(c){
+        var regexBody = ANY_TEXT + _.map(textChars,function (c) {
             return c + ANY_TEXT;
-        }).join('') + ANY_TEXT;
-        var regex = new RegExp(regexBody,'i');
+        }).join('');
+        var regex = new RegExp(regexBody, 'i');
 
 
         var sug = _(suggessions)
-            .filter(function(link){
+            .filter(function (link) {
                 return regex.test(link.title);
             })
             .map(function (link) {
+
+                var matches = link.title.match(regex);
+                var startPhrase = matches[1];
+                var description = startPhrase + _(matches).slice(2).reduce(function (desc, title, index) {
+                    desc += '<match>' + textChars[index] + '</match>' + title;
+                    return desc;
+                }, '');
+                var descriptionWithURL = description + ' [' + _.escape(link.url) + ']';
                 return {
                     content: link.title,
-                    description: link.title + ' [' + _.escape(link.url) + ']'
+                    description: descriptionWithURL
                 }
             }).take(5).value();
         console.debug('Suggestions for %s ', text, sug);
@@ -44,7 +52,7 @@ chrome.omnibox.onInputChanged.addListener(
 chrome.omnibox.onInputEntered.addListener(
     function (text) {
         console.debug('Selected : ' + text);
-        chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+        chrome.tabs.query({active: true, currentWindow: true}, function (tabs) {
             chrome.tabs.sendMessage(tabs[0].id, {data: text});
         });
 
