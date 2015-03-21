@@ -41,11 +41,20 @@ chrome.omnibox.onInputChanged.addListener(
                     return desc;
                 }, '');
                 var descriptionWithURL = description + ' <url>' + _.escape(link.url) + '</url>';
+
+                var rank = _(matches).compact().size() - _(matches).size() ;
+
                 return {
                     content: link.title,
-                    description: descriptionWithURL
+                    description: descriptionWithURL,
+                    rank: rank
                 }
-            }).take(5).value();
+            })
+            .sortBy('rank')
+            .map(function(sub){
+                return _.omit(sub, 'rank');
+            })
+            .take(5).value();
         console.debug('Suggestions for %s ', text, sug);
         suggest(sug);
     });
