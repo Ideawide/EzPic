@@ -89,8 +89,11 @@ chrome.omnibox.onInputChanged.addListener(
                     return _.omit(sub, 'rank');
                 })
                 .take(5).value();
+            if (_.isEmpty(sug)){
+                var message = "No links found in this page";
+                sug = [{content : message, description : message}];
+            }
             console.debug('Suggestions for %s ', text, sug);
-
         } else {
             sug = [];
             console.error('No tab is selected');
