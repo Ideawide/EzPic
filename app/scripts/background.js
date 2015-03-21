@@ -4,4 +4,7 @@ chrome.runtime.onInstalled.addListener(function (details) {
   console.log('previousVersion', details.previousVersion);
 });
 
-console.log('\'Allo \'Allo! Event Page');
+
+chrome.runtime.onMessage.addListener(function(request, sender){
+   console.debug('Links updated ', sender, request);
+});
