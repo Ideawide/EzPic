@@ -3,6 +3,7 @@ var ANY_TEXT = '(.*)';
 
 var suggessions = [];
 
+
 chrome.runtime.onInstalled.addListener(
     function (details) {
         console.log('previousVersion', details.previousVersion);
@@ -39,7 +40,7 @@ chrome.omnibox.onInputChanged.addListener(
                     desc += '<match>' + textChars[index] + '</match>' + title;
                     return desc;
                 }, '');
-                var descriptionWithURL = description + ' [' + _.escape(link.url) + ']';
+                var descriptionWithURL = description + ' <url>' + _.escape(link.url) + '</url>';
                 return {
                     content: link.title,
                     description: descriptionWithURL
