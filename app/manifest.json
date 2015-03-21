@@ -9,14 +9,11 @@
   },
   "default_locale": "en",
   "background": {
-    "scripts": [
-      "scripts/chromereload.js",
-      "scripts/background.js"
-    ]
+    "page": "background.html"
   },
   "options_page": "options.html",
   "omnibox": {
-    "keyword": "ezpick"
+    "keyword": "ez"
   },
   "content_scripts": [
     {
