@@ -26,7 +26,6 @@
         //Communication
         chrome.runtime.sendMessage({data : links});
 
-        //TODO: click the element
     });
 
     chrome.runtime.onMessage.addListener(

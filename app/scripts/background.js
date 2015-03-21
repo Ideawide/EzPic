@@ -1,8 +1,41 @@
 'use strict';
-var ANY_TEXT = '(.*)';
+var SELECT_FROM_BELOW='Select a link from the below list to click it.',
+    LOADING_SUGGESTIONS = 'Loading suggestions. Please wait till the page is fully loaded';
 
-var suggessions = [];
+var ANY_TEXT = '(.*)',
+    suggessions = [],
+    currentTab = 0;
 
+getCurrentTab();
+setDefaultSuggestion(LOADING_SUGGESTIONS);
+
+function getCurrentTab(callback) {
+    chrome.tabs.query({active: true, currentWindow: true}, function (tabs) {
+        if (_.isEmpty(tabs)) {
+            console.error("No tab is selected");
+        } else {
+            var currentTabId = tabs[0].id;
+            tabChanged(currentTabId);
+            if (callback)
+                callback(currentTabId);
+        }
+    });
+}
+
+function tabChanged(tabId) {
+    console.debug('Tab changed', tabId);
+    if (_.isEmpty(suggessions[tabId]))
+        setDefaultSuggestion(LOADING_SUGGESTIONS);
+    else
+        setDefaultSuggestion(SELECT_FROM_BELOW);
+    currentTab = tabId;
+}
+
+function setDefaultSuggestion(suggestion){
+    chrome.omnibox.setDefaultSuggestion({
+        description : suggestion
+    });
+}
 
 chrome.runtime.onInstalled.addListener(
     function (details) {
@@ -16,54 +49,65 @@ chrome.runtime.onMessage.addListener(
             return;
 
         console.debug('Links updated ', sender, request);
-        suggessions = request.data;
+        suggessions[sender.tab.id] = request.data;
     });
 
 chrome.omnibox.onInputChanged.addListener(
     function (text, suggest) {
-        var textChars = text.split('');
-        var regexBody = ANY_TEXT + _.map(textChars,function (c) {
-            return c + ANY_TEXT;
-        }).join('');
-        var regex = new RegExp(regexBody, 'i');
+        var sug;
+        if (currentTab) {
+            var textChars = text.split('');
+            var regexBody = ANY_TEXT + _.map(textChars,function (c) {
+                return c + ANY_TEXT;
+            }).join('');
+            var regex = new RegExp(regexBody, 'i');
 
+            sug = _(suggessions[currentTab])
+                .filter(function (link) {
+                    return regex.test(link.title);
+                })
+                .map(function (link) {
 
-        var sug = _(suggessions)
-            .filter(function (link) {
-                return regex.test(link.title);
-            })
-            .map(function (link) {
+                    var matches = link.title.match(regex);
+                    var startPhrase = matches[1];
+                    var description = startPhrase + _(matches).slice(2).reduce(function (desc, title, index) {
+                        desc += '<match>' + textChars[index] + '</match>' + title;
+                        return desc;
+                    }, '');
+                    var descriptionWithURL = description + ' <url>' + _.escape(link.url) + '</url>';
 
-                var matches = link.title.match(regex);
-                var startPhrase = matches[1];
-                var description = startPhrase + _(matches).slice(2).reduce(function (desc, title, index) {
-                    desc += '<match>' + textChars[index] + '</match>' + title;
-                    return desc;
-                }, '');
-                var descriptionWithURL = description + ' <url>' + _.escape(link.url) + '</url>';
+                    var rank = _(matches).compact().size() - _(matches).size();
 
-                var rank = _(matches).compact().size() - _(matches).size() ;
+                    return {
+                        content: link.title,
+                        description: descriptionWithURL,
+                        rank: rank
+                    }
+                })
+                .sortBy('rank')
+                .map(function (sub) {
+                    return _.omit(sub, 'rank');
+                })
+                .take(5).value();
+            console.debug('Suggestions for %s ', text, sug);
 
-                return {
-                    content: link.title,
-                    description: descriptionWithURL,
-                    rank: rank
-                }
-            })
-            .sortBy('rank')
-            .map(function(sub){
-                return _.omit(sub, 'rank');
-            })
-            .take(5).value();
-        console.debug('Suggestions for %s ', text, sug);
+        } else {
+            sug = [];
+            console.error('No tab is selected');
+        }
+
         suggest(sug);
     });
 
 chrome.omnibox.onInputEntered.addListener(
     function (text) {
         console.debug('Selected : ' + text);
-        chrome.tabs.query({active: true, currentWindow: true}, function (tabs) {
-            chrome.tabs.sendMessage(tabs[0].id, {data: text});
-        });
-
+        chrome.tabs.sendMessage(currentTab, {data: text});
     });
+
+chrome.tabs.onActiveChanged.addListener(tabChanged);
+chrome.tabs.onUpdated.addListener(tabChanged);
+chrome.tabs.onRemoved.addListener(function (tabId) {
+    if (suggessions[tabId])
+        delete suggessions[tabId];
+});
