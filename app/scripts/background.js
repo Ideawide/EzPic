@@ -1,13 +1,10 @@
 'use strict';
-var SELECT_FROM_BELOW='Select a link from the below list to click it.',
+var SELECT_FROM_BELOW = 'Select a link from the below list to click it.',
     LOADING_SUGGESTIONS = 'Loading suggestions. Please wait till the page is fully loaded';
 
 var ANY_TEXT = '(.*)',
     suggessions = [],
     currentTab = 0;
-
-getCurrentTab();
-setDefaultSuggestion(LOADING_SUGGESTIONS);
 
 function getCurrentTab(callback) {
     chrome.tabs.query({active: true, currentWindow: true}, function (tabs) {
@@ -31,9 +28,9 @@ function tabChanged(tabId) {
     currentTab = tabId;
 }
 
-function setDefaultSuggestion(suggestion){
+function setDefaultSuggestion(suggestion) {
     chrome.omnibox.setDefaultSuggestion({
-        description : suggestion
+        description: suggestion
     });
 }
 
@@ -89,9 +86,11 @@ chrome.omnibox.onInputChanged.addListener(
                     return _.omit(sub, 'rank');
                 })
                 .take(5).value();
-            if (_.isEmpty(sug)){
+            if (_.isEmpty(sug)) {
                 var message = "No links found in this page";
-                sug = [{content : message, description : message}];
+                sug = [
+                    {content: message, description: message}
+                ];
             }
             console.debug('Suggestions for %s ', text, sug);
         } else {
@@ -114,3 +113,8 @@ chrome.tabs.onRemoved.addListener(function (tabId) {
     if (suggessions[tabId])
         delete suggessions[tabId];
 });
+
+
+
+getCurrentTab();
+setDefaultSuggestion(LOADING_SUGGESTIONS);

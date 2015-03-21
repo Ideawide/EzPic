@@ -9,14 +9,14 @@
     var links = [],
         elms = {};
 
-    $(document).ready(function(){
-        $('a').each(function(){
+    $(document).ready(function () {
+        $('a').each(function () {
             var $this = $(this);
-            var title = ($this.prop('title') || $this.text()).replace(/\s+/g,' ').trim();
-            if (title){
+            var title = ($this.prop('title') || $this.text()).replace(/\s+/g, ' ').trim();
+            if (title) {
                 links.push({
-                    title : title,
-                    url:$this.prop('href') || '#'
+                    title: title,
+                    url: $this.prop('href') || '#'
                 });
                 elms[title] = $this;
             }
@@ -24,7 +24,7 @@
 
 
         //Communication
-        chrome.runtime.sendMessage({data : links});
+        chrome.runtime.sendMessage({data: links});
 
     });
 
