@@ -12,7 +12,13 @@
         var links = [];
 
         $('a').each(function(){
-            links.push({title : $(this).prop('title'), url:$(this).prop('href')})
+            var $this = $(this);
+            var title = ($this.prop('title') || $this.text()).replace(/\s+/g,' ');
+            if (title)
+                links.push({
+                        title : title,
+                        url:$this.prop('href') || '#'
+                    });
         })
 
 
