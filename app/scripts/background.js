@@ -1,4 +1,5 @@
 'use strict';
+var ANY_TEXT = '(.*)';
 
 var suggessions = [];
 
@@ -19,13 +20,23 @@ chrome.runtime.onMessage.addListener(
 
 chrome.omnibox.onInputChanged.addListener(
     function (text, suggest) {
+        var textChars = text.split('');
+        var regexBody = ANY_TEXT+_.map(textChars, function(c){
+            return c + ANY_TEXT;
+        }).join('') + ANY_TEXT;
+        var regex = new RegExp(regexBody,'i');
+
+
         var sug = _(suggessions)
+            .filter(function(link){
+                return regex.test(link.title);
+            })
             .map(function (link) {
                 return {
                     content: link.title,
-                    description: link.url
+                    description: link.title + ' [' + _.escape(link.url) + ']'
                 }
-            }).take(10).value();
+            }).take(5).value();
         console.debug('Suggestions for %s ', text, sug);
         suggest(sug);
     });

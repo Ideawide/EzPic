@@ -12,7 +12,7 @@
     $(document).ready(function(){
         $('a').each(function(){
             var $this = $(this);
-            var title = ($this.prop('title') || $this.text()).replace(/\s+/g,' ');
+            var title = ($this.prop('title') || $this.text()).replace(/\s+/g,' ').trim();
             if (title){
                 links.push({
                     title : title,
