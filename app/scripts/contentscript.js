@@ -35,7 +35,10 @@
                 return;
 
             console.debug('Links selected', sender, request);
-            elms[request.data][0].click();
+            if (elms[request.data])
+                elms[request.data][0].click();
+            else
+                console.warn('Element not found');
         });
 
 
